@@ -27,7 +27,7 @@ Raw CSV exports and a reproducible calculation are in `results/` and `tools/anal
 
 ## Quick start
 
-Follow [setup](docs/SETUP.md) for Mac, Mosquitto, MCUXpresso import and UART settings. Follow [demonstration](docs/DEMO.md) for the live test sequence. [Validation notes](docs/VALIDATION.md) describe what is verified and what is still limited.
+Follow [setup](docs/SETUP.md) for Mac, Mosquitto, MCUXpresso import and UART settings. Follow [Validation notes](docs/VALIDATION.md) describe what is verified and what is still limited.
 
 | Directory | Contents |
 |---|---|
