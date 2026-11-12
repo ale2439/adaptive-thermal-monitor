@@ -62,8 +62,3 @@ The ring is RAM: reset or power loss erases it. Full capacity drops the oldest r
 
 MQTT is anonymous, unencrypted and restricted to a trusted LAN for this demonstration. Do not expose its listener through router port forwarding. Authentication/TLS is future work, not a tested security claim.
 
-## Source notices
-
-This project incorporates NXP MCUXpresso SDK, lwIP, FreeRTOS and other bundled source. Existing copyright and license notices are retained in the corresponding files. This repository does not grant a replacement license for third-party source. Flask and Paho are installed dependencies rather than vendored packages.
-
-This is project setup and validation documentation, not an IEEE course report. The team should write its own report in accordance with course rules.
