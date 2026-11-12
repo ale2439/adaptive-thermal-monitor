@@ -32,8 +32,7 @@ python -m pip install -r dashboard/requirements.txt
 python dashboard/app.py --broker 10.0.0.249
 ```
 
-Open `http://127.0.0.1:8765`. Start this before the recovery firmware; it assigns a boot-session ID and acknowledges saved samples. Run only one dashboard process. Stop a prior dashboard with Control-C before starting this copy. A separate `thermal_recovery.sqlite3` is created beside this app; databases are excluded from Git. The original working dashboard folder remains an alternative installation, but do not run both simultaneously.
-
+Open `http://127.0.0.1:8765`. Start this before the recovery firmware; it assigns a boot-session ID and acknowledges saved samples. Run only one dashboard process. Stop a prior dashboard with Control-C before starting this copy. A separate `thermal_recovery.sqlite3` is created beside this app; databases are excluded from Git.
 ## Firmware
 
 1. Terminate every active MCU debug session. A suspended session is still active.
@@ -48,15 +47,3 @@ The MQTT output ring must be 1024 bytes; the recovery JSON exceeds 256 bytes. Th
 
 `source/thermal_logic.h` uses integer millidegrees: 28000 ON and 27800 OFF. The dashboard API, chart lines and labels use 28.0/27.8. Keep them consistent if changing policy. Broker configuration and thresholds are demonstration settings, not equipment safety limits.
 
-## GitHub upload
-
-Create an empty GitHub repository named `adaptive-thermal-monitor` without adding a README, license or gitignore in GitHub. From this extracted repository folder:
-
-```bash
-git init -b main
-git add .
-git status --short
-git commit -m "Add thermal monitoring, adaptive MQTT and outage recovery"
-```
-
-Then add the actual GitHub URL as `origin` and push `main`. Remote URL/authentication are account-specific. Inspect `git status` before committing; environments, databases, debug builds and launch files should not be staged. Raw evidence CSVs are intentionally included. If Git requests name/email, configure the identity you want associated with your commits. Do not add passwords or tokens to repository files.
