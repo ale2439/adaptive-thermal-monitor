@@ -1,0 +1,6 @@
+pulse_ms,phase_cases,sensor_detected,adaptive_reported,fixed_1hz_reported,adaptive_missed_total,max_detection_ms
+100,10,1,1,1,9,0
+200,10,2,2,2,8,100
+500,10,5,5,5,5,400
+1000,10,10,10,10,0,900
+2000,10,10,10,10,0,900

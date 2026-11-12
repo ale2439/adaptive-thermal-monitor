@@ -300,6 +300,8 @@ static void app_thread(void *arg)
     char session[33] = {0};
     bool inFlight = false, recovering = false, reported = false;
     bool lastAlert = false;
+    bool pendingAlertEvent = false, pendingAlertState = false, pendingRecovered = false;
+    uint32_t pendingSampleMs = 0U;
     int32_t lastMc = 0;
     uint32_t pendingSeq = 0, pendingSince = 0, lastMs = 0;
     uint32_t nextSample = sys_now(), lastHello = sys_now() - 2000U;
@@ -313,6 +315,12 @@ static void app_thread(void *arg)
                 PRINTF("Dashboard session assigned: %s\r\n", session);
             }
             if (e.kind == 2 && inFlight && !strcmp(session, e.session) && e.seq == pendingSeq) {
+                if (pendingAlertEvent) {
+                    PRINTF("ALERT_ACK session=%s seq=%lu sample_ms=%lu saved_ack_rtt_ms=%lu state=%s recovered=%u\r\n",
+                        session, (unsigned long)e.seq, (unsigned long)pendingSampleMs,
+                        (unsigned long)(uint32_t)(sys_now() - pendingSampleMs),
+                        pendingAlertState ? "ON" : "OFF", pendingRecovered ? 1U : 0U);
+                }
                 ThermalBuffer_Acknowledge(&buffer, e.seq);
                 inFlight = false;
                 if (recovering) PRINTF("Saved sample %lu; backlog %lu, dropped %lu\r\n",
@@ -339,10 +347,14 @@ static void app_thread(void *arg)
             double temperature;
             if (sensorReady && ThermalSensor_Read(&temperature) == kStatus_Success) {
                 int32_t mc = (int32_t)(temperature * 1000.0 + (temperature >= 0 ? .5 : -.5));
+                bool previousAlert = alertActive;
                 alertActive = Thermal_UpdateAlert(alertActive, mc);
                 ThermalLED_Update(true, alertActive);
-                thermal_sample_t s = { ++sequence, sys_now(), mc, alertActive };
+                thermal_sample_t s = { ++sequence, sys_now(), mc, alertActive, previousAlert != alertActive };
                 ThermalBuffer_Push(&buffer, s);
+                recovering = Thermal_KeepAlertHistory(recovering, inFlight, s.alert_changed);
+                if (s.alert_changed) PRINTF("ALERT_EVENT seq=%lu sample_ms=%lu state=%s\r\n",
+                    (unsigned long)s.seq, (unsigned long)s.sampled_ms, s.alert ? "ON" : "OFF");
                 uint32_t magnitude = mc < 0 ? (uint32_t)-mc : (uint32_t)mc;
                 PRINTF("Sample %lu: %s%lu.%03lu C | %s | MQTT %s | buffer %lu | dropped %lu\r\n",
                     (unsigned long)sequence, mc < 0 ? "-" : "",
@@ -361,6 +373,8 @@ static void app_thread(void *arg)
                     s.temperature_mc, lastMc, s.alert, lastAlert)) {
                 if (queue_sample(s, session, recovering)) {
                     inFlight = true; pendingSeq = s.seq; pendingSince = sys_now();
+                    pendingAlertEvent = s.alert_changed; pendingAlertState = s.alert;
+                    pendingSampleMs = s.sampled_ms; pendingRecovered = recovering;
                     reported = true; lastMs = pendingSince; lastMc = s.temperature_mc; lastAlert = s.alert;
                 }
             }

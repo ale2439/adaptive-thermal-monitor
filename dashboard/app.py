@@ -33,13 +33,13 @@ def validate_payload(raw):
     temperature = data.get("temperature_c")
     if isinstance(temperature, bool) or not isinstance(temperature, (int, float)):
         raise ValueError("temperature_c must be numeric")
-    if not math.isfinite(temperature) or not -100 <= temperature <= 200:
+    if not -100 <= temperature <= 200 or not math.isfinite(temperature):
         raise ValueError("temperature_c is outside accepted display range")
     if type(data.get("alert")) is not bool:
         raise ValueError("alert must be a JSON boolean")
     for field in ("seq", "uptime_ms"):
-        if type(data.get(field)) is not int or data[field] < 0:
-            raise ValueError(f"{field} must be a nonnegative integer")
+        if type(data.get(field)) is not int or not 0 <= data[field] <= 4294967295:
+            raise ValueError(f"{field} must be an unsigned 32-bit integer (0..4294967295)")
     interval = data.get("max_interval_ms", 1000)
     if type(interval) is not int or not 1000 <= interval <= 60000:
         raise ValueError("max_interval_ms must be an integer from 1000 to 60000")

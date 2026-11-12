@@ -18,3 +18,7 @@ jobs:
       - run: /tmp/test_policy
       - run: cc -std=c99 -Wall -Wextra -Werror -Itests/native/led_mocks tests/native/test_led.c -o /tmp/test_led
       - run: /tmp/test_led
+      - run: python tools/check_readme_links.py
+      - run: python -m unittest discover -s tools/tests -v
+      - run: cc -std=c99 -Wall -Wextra -Werror tests/native/test_excursions.c -o /tmp/test_excursions
+      - run: /tmp/test_excursions

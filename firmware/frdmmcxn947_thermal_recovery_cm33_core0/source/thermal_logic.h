@@ -23,4 +23,10 @@ static inline bool Thermal_ReportDue(bool reported, uint32_t now,
         delta >= THERMAL_REPORT_DELTA_MC || delta <= -THERMAL_REPORT_DELTA_MC ||
         (uint32_t)(now - last_ms) >= THERMAL_MAX_REPORT_MS;
 }
+/* Retain chronological samples if an alert changes behind a pending ACK.
+ * Otherwise an ON then OFF excursion could be coalesced into the newest row. */
+static inline bool Thermal_KeepAlertHistory(bool recovering, bool in_flight, bool changed)
+{
+    return recovering || (in_flight && changed);
+}
 #endif

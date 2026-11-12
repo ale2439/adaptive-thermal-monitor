@@ -49,3 +49,7 @@ This checks observable output states and startup configuration with GPIO stubs; 
 5. Export a fresh CSV and capture evidence of physical colours. Existing result CSVs predate this fix and are retained as historical evidence, not evidence of the new LED behavior.
 
 A prior sensor alert remains in history if the sensor fails, while the physical LED becomes blue to indicate the reading is not valid. Blue is not an MQTT connection indicator.
+
+## New acceptance and timing checks
+
+See [fresh hardware acceptance](HARDWARE_ACCEPTANCE.md) for the required blue/green/red/green and unplugged-Ethernet colour trials, board-clock storage-ACK timing instrumentation, and the distinction between software excursion modeling and physical missed-excursion evidence. Prior CSVs do not replace these new trials.

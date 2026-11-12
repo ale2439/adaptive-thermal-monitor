@@ -7,6 +7,7 @@ typedef struct {
     uint32_t seq, sampled_ms;
     int32_t temperature_mc;
     bool alert;
+    bool alert_changed; /* Retained with the sample for ACK timing. */
 } thermal_sample_t;
 typedef struct {
     thermal_sample_t samples[THERMAL_BUFFER_CAPACITY];
