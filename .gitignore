@@ -1,0 +1,19 @@
+# Local environments, databases, IDE output, and credentials
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3-*
+.DS_Store
+.env
+.env.*
+!.env.example
+Debug/
+Release/
+.metadata/
+*.axf
+*.elf
+*.o
+*.d
+*.map
+*.launch

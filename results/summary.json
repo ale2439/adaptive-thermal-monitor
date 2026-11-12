@@ -1,0 +1,42 @@
+{
+  "fixed": {
+    "readings": 866,
+    "duration_s": 869.52,
+    "interval_s": 1.0052254335260116
+  },
+  "adaptive": {
+    "readings": 30,
+    "duration_s": 284.48,
+    "interval_s": 9.809655172413795,
+    "message_rate_reduction_pct": 89.75269348556864
+  },
+  "outage": {
+    "session_id": "f59ad654101643d9a7fc7f5d57d713c6",
+    "recovered_readings": 53,
+    "first_recovered_seq": 51,
+    "last_recovered_seq": 103,
+    "missing_recovered_seq": [],
+    "duplicate_stored_ids": 0,
+    "dropped_samples": 0,
+    "peak_reported_buffer": 41,
+    "replay_receipt_span_s": 12.496
+  },
+  "alerts": {
+    "session_id": "7ae47f65759c4399b5e654b6e010fc64",
+    "readings": 8,
+    "initial_alert": false,
+    "transitions": [
+      {
+        "seq": 31,
+        "temperature_c": 28.0,
+        "alert": true
+      },
+      {
+        "seq": 45,
+        "temperature_c": 27.75,
+        "alert": false
+      }
+    ],
+    "hysteresis_hold_observed": true
+  }
+}

@@ -1,0 +1,48 @@
+# Optional integration check; requires amqtt in a test environment.
+import asyncio,json,sys,tempfile
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from amqtt.broker import Broker
+import paho.mqtt.client as mqtt
+from app import Monitor,TOPIC,HELLO_TOPIC,SESSION_TOPIC,ACK_TOPIC
+async def wait_for(f):
+ for _ in range(100):
+  if f():return
+  await asyncio.sleep(.05)
+ raise AssertionError('timeout')
+async def run():
+ config={'listeners':{'default':{'type':'tcp','bind':'127.0.0.1:18886'}},'plugins':{'amqtt.plugins.authentication.AnonymousAuthPlugin':{'allow_anonymous':True}}}
+ b=Broker(config);await b.start()
+ with tempfile.TemporaryDirectory() as d:
+  m=Monitor(Path(d)/'test.sqlite3','127.0.0.1',18886);m.start()
+  seen=[]
+  device=mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+  def conn(c,u,f,r,p):c.subscribe([(SESSION_TOPIC,1),(ACK_TOPIC,1)])
+  device.on_connect=conn;device.on_message=lambda c,u,msg:seen.append((msg.topic,msg.payload.decode()))
+  device.connect_async('127.0.0.1',18886);device.loop_start()
+  try:
+   await wait_for(lambda:m.connected and device.is_connected());await asyncio.sleep(.3)
+   device.publish(HELLO_TOPIC,'start',qos=1)
+   await wait_for(lambda:any(t==SESSION_TOPIC for t,_ in seen))
+   session=next(v for t,v in seen if t==SESSION_TOPIC)
+   sample=dict(device_id='board1',session_id=session,seq=1,uptime_ms=1000,temperature_c=28,alert=True,
+      reporting_mode='adaptive',max_interval_ms=10000,sample_age_ms=30000,recovered=True,buffer_count=1,dropped_samples=0)
+   device.publish(TOPIC,json.dumps(sample),qos=1)
+   await wait_for(lambda:(ACK_TOPIC,session+':1') in seen)
+   assert m.snapshot()['total']==1 and m.snapshot()['state']=='recovering'
+   device.publish(TOPIC,json.dumps(sample),qos=1)
+   await wait_for(lambda:seen.count((ACK_TOPIC,session+':1'))==2)
+   assert m.snapshot()['total']==1 and m.snapshot()['duplicates']==1
+   # Dashboard restart, same retry: database identity survives and it ACKs again.
+   m.stop();m=Monitor(Path(d)/'test.sqlite3','127.0.0.1',18886);m.start()
+   await wait_for(lambda:m.connected);await asyncio.sleep(.2)
+   device.publish(TOPIC,json.dumps(sample),qos=1)
+   await wait_for(lambda:seen.count((ACK_TOPIC,session+':1'))==3)
+   assert m.snapshot()['total']==1
+   sample.update(seq=2,uptime_ms=32000,sample_age_ms=0,recovered=False)
+   device.publish(TOPIC,json.dumps(sample),qos=1)
+   await wait_for(lambda:(ACK_TOPIC,session+':2') in seen)
+   assert m.snapshot()['total']==2 and m.snapshot()['state']=='live'
+   print('PASS: real MQTT session assignment, SQLite commit and application ACK, historical freshness, retry deduplication, dashboard restart, return to live')
+  finally:device.disconnect();device.loop_stop();m.stop();await b.shutdown()
+asyncio.run(run())

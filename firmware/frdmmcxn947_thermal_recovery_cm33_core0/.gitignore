@@ -1,0 +1,10 @@
+Debug/
+Release/
+.settings/
+*.launch
+*.o
+*.d
+*.su
+*.axf
+*.map
+.DS_Store
