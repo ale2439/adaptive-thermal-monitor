@@ -21,7 +21,6 @@ The final source is reconstructed from the supplied SDK projects and the exact M
 - Native policy tests for thresholds, reporting delta/heartbeat, timer wrap; native ring tests for overflow, dropped count, ordered replay and repeated ACK.
 - Dashboard tests for malformed telemetry, persistence, legacy schema migration, adaptive freshness, deduplication, boot sessions, storage-before-ACK and no ACK on failed storage.
 - Local actual-broker MQTT integration checked session assignment, delivery/ACK, duplicate retry, dashboard restart, and recovered-to-live transition before the final threshold-only packaging edits.
-- GitHub workflow supplies software checks only. It has not run remotely until the repository is pushed.
 
 ## Scope not established by these tests
 
