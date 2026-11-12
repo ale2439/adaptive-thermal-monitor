@@ -13,6 +13,7 @@
 #include "mqtt_freertos.h"
 #include "thermal_sensor.h"
 #include "thermal_logic.h"
+#include "thermal_led.h"
 #include "thermal_buffer.h"
 #include "FreeRTOS.h"
 #include "queue.h"
@@ -332,13 +333,14 @@ static void app_thread(void *arg)
             nextSample = now + 1000U;
             if (!sensorReady) {
                 sensorReady = ThermalSensor_Init() == kStatus_Success;
-                if (!sensorReady) { PRINTF("Sensor initialization failed; retrying.\r\n"); }
+                if (!sensorReady) { ThermalLED_Update(false, false); PRINTF("Sensor initialization failed; retrying.\r\n"); }
                 else PRINTF("P3T1755 ready. Alert ON >=28.000 C, OFF <=27.800 C.\r\n");
             }
             double temperature;
             if (sensorReady && ThermalSensor_Read(&temperature) == kStatus_Success) {
                 int32_t mc = (int32_t)(temperature * 1000.0 + (temperature >= 0 ? .5 : -.5));
                 alertActive = Thermal_UpdateAlert(alertActive, mc);
+                ThermalLED_Update(true, alertActive);
                 thermal_sample_t s = { ++sequence, sys_now(), mc, alertActive };
                 ThermalBuffer_Push(&buffer, s);
                 uint32_t magnitude = mc < 0 ? (uint32_t)-mc : (uint32_t)mc;
@@ -349,6 +351,7 @@ static void app_thread(void *arg)
                     (unsigned long)buffer.count, (unsigned long)buffer.dropped);
             } else if (sensorReady) {
                 PRINTF("Sensor read failed; no invented sample.\r\n"); sensorReady = false;
+                ThermalLED_Update(false, false);
             }
         }
         if (!inFlight && connected && session[0] && buffer.count) {

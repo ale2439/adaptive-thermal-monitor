@@ -16,3 +16,5 @@ jobs:
       - run: /tmp/test_buffer
       - run: cc -std=c99 -Wall -Wextra -Werror tests/native/test_policy.c -o /tmp/test_policy
       - run: /tmp/test_policy
+      - run: cc -std=c99 -Wall -Wextra -Werror -Itests/native/led_mocks tests/native/test_led.c -o /tmp/test_led
+      - run: /tmp/test_led

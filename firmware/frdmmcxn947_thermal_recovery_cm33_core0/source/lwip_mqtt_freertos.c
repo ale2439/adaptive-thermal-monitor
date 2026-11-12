@@ -14,6 +14,7 @@
 #include "app.h"
 #include "fsl_phy.h"
 #include "mqtt_freertos.h"
+#include "thermal_led.h"
 
 #include "lwip/opt.h"
 #include "lwip/api.h"
@@ -114,6 +115,7 @@ static void stack_init(void *arg)
 int main(void)
 {
     BOARD_InitHardware();
+    ThermalLED_Init();
 
     /* Initialize lwIP from thread */
     if (sys_thread_new("main", stack_init, NULL, INIT_THREAD_STACKSIZE, INIT_THREAD_PRIO) == NULL)

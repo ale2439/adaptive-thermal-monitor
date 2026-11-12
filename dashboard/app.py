@@ -101,18 +101,30 @@ class Monitor:
         fields = ("device_id", "seq", "uptime_ms", "temperature_c", "alert", "max_interval_ms",
                   "reporting_mode", "session_id", "sample_age_ms", "recovered", "buffer_count", "dropped_samples")
         with self.lock:
-            if data["session_id"] is not None:
-                previous = self.db.execute("SELECT uptime_ms,temperature_c,alert FROM readings WHERE session_id=? AND seq=?",
-                                           (data["session_id"], data["seq"])).fetchone()
-                if previous is not None:
-                    if previous != (data["uptime_ms"], data["temperature_c"], int(data["alert"])):
-                        raise ValueError("Conflicting duplicate sample")
-                    self.duplicates += 1
-                    return data
-            self.db.execute("INSERT INTO readings (received_ms," + ",".join(fields) + ") VALUES (" +
-                            ",".join("?" for _ in range(len(fields)+1)) + ")",
-                            (now,) + tuple(data[k] for k in fields))
-            self.db.commit()  # Only after commit may _message publish the application acknowledgment.
+            # A failed COMMIT may leave an INSERT visible only on this connection.
+            # Never let that pending row enter the duplicate/ACK path.
+            if self.db.in_transaction:
+                self.db.rollback()
+            duplicate = False
+            with self.db:
+                # sqlite3's context manager commits on success and rolls back if
+                # the body OR the commit itself raises (e.g. SQLITE_BUSY).
+                if data["session_id"] is not None:
+                    previous = self.db.execute(
+                        "SELECT uptime_ms,temperature_c,alert FROM readings WHERE session_id=? AND seq=?",
+                        (data["session_id"], data["seq"])).fetchone()
+                    if previous is not None:
+                        if previous != (data["uptime_ms"], data["temperature_c"], int(data["alert"])):
+                            raise ValueError("Conflicting duplicate sample")
+                        duplicate = True
+                if not duplicate:
+                    self.db.execute("INSERT INTO readings (received_ms," + ",".join(fields) + ") VALUES (" +
+                                    ",".join("?" for _ in range(len(fields)+1)) + ")",
+                                    (now,) + tuple(data[k] for k in fields))
+            # No return, freshness update or ACK eligibility before commit succeeds.
+            if duplicate:
+                self.duplicates += 1
+                return data
             self.last_arrival = time.monotonic()
             if data["recovered"]:
                 self.last_received_monotonic = None
